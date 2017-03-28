@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>蛇</title>
+	<style type="text/css">
+		*{
+			margin:0;
+			padding:0;
+		}
+		#wrap{
+			width: 300px;
+			height: 300px;
+			border:3px solid black;
+			position: absolute;
+			background: url("bg.png");
+			left: 0;
+			right: 0;
+			top: 0;
+			bottom: 0;
+			margin: auto;
+		}
+		#wrap #snake{
+			width: 15px;
+			height: 15px;
+			background: red;
+			position: absolute;
+			left: 0;
+			top: 0;
+		}
+		#wrap #food{
+			width: 15px;
+			height: 15px;
+			background: blue;
+			position: absolute;
+			left: 150px;
+			top:0;
+		}
+
+		#wrap .snakeBody{
+			width: 15px;
+			height: 15px;
+			background-color: gray;
+			position: absolute;
+			left: 0px;
+			top: 0px;
+		}
+	</style>
+</head>
+<body>
+	<!-- 蛇的活动范围 -->
+	<div id="wrap">
+		<!-- 蛇 -->
+		<div id="snake"></div>
+		<!-- 食物 -->
+		<div id="food"></div>
+	</div>
+</body>
+<script type="text/javascript">
+	// 获取页面对应的元素
+	var snake = document.getElementById("snake");
+	var food = document.getElementById("food");
+
+	// 蛇移动的值left和top
+	var snakePosL = 0;
+	var snakePosT = 0;
+
+	// 速度（水平和垂直方向）
+	var vX = 0;
+	var vY = 0;
+
+	// 每一步移动的距离
+	var distance = snake.offsetWidth;//15
+
+	// 5---数组--
+	// 用来保存蛇div
+	var snakeArr = [snake];
+
+	// ----6.0------
+	// 全局变量，保存最后一个div的位置(最后一节蛇身)
+	var snakePosLast = {"l":0,"t":0};
+	// var lastLeft = 0;
+	// var lastTop = 0;
+
+	// 复习：
+	// json数据格式
+	// var json = {
+	// 	"left":111,
+	// 	"top":222
+	// }
+	// json.left = 222;
+	// json.top = 33;
+
+
+	// 7.2 -------------
+	// 改变ctrlbol的 布尔值
+	// false: 未点击方向键
+	// true: 已经点击方向键
+	var ctrlBol = false;
+
+	// 定时器
+	var timer = setInterval(function(){
+		// 累计蛇移动值
+		snakePosL += vX;
+		snakePosT += vY;
+
+		// 调函数:蛇移动
+		snakeMoveFn();
+
+		// 调函数:吃食物
+		eatFoodFn();
+
+		// 调函数：判断碰壁
+		touchWallFn();
+
+		// 调函数：判断是否碰到自己
+		touchSelfFn();
+	},200);
+
+	// 封装函数
+	// 作用：蛇的移动
+	function snakeMoveFn(){
+		// 6.1-----
+		snakePosLast.l = snakeArr[snakeArr.length-1].offsetLeft;
+		snakePosLast.t = snakeArr[snakeArr.length-1].offsetTop;
+		// console.log(snakePosLast.l, snakePosLast.t);
+
+		// snake.style.left = snakePosL + "px";
+		// snake.style.top = snakePosT + "px";
+
+		// -------5-----改写------
+		// 5.1把最后一节放到蛇头的位置
+		// 先改变div的left和top
+		snakeArr[snakeArr.length-1].style.left = snakeArr[0].offsetLeft + "px";
+		snakeArr[snakeArr.length-1].style.top = snakeArr[0].offsetTop + "px";
+
+		// 5.1.1
+		// 给最后一节蛇身添加类
+		snakeArr[snakeArr.length-1].className = "snakeBody";
+
+		// 5.2 移动蛇头
+		snake.style.left = snakePosL + "px";
+		snake.style.top = snakePosT + "px";
+
+		// 5.3 数组里面的值也要对应改变
+		// snakeArr[snake, div1, div2, div3]
+		// snakeArr[snake, div3, div1, div2]
+		snakeArr.splice(1,0,snakeArr.pop());
+
+
+		// 6.2------
+		// 改变布尔值
+		ctrlBol = false;
+	}
+
+	// 添加键盘事件
+	document.onkeydown = function(e){
+		if(ctrlBol){
+			return;
+		}
+		ctrlBol = true;
+
+
+		var e = e || window.event;
+
+		// 判断用户在键盘按下哪个键
+		switch(e.keyCode){
+			// 左
+			case 37:
+				// 判断当前方向是否向右
+				// if(vX > 0){
+				// 	// 判断是向右走
+				// 	vX = distance;
+				// 	break;
+				// }
+				// vX = -distance;
+				// vY = 0;
+
+				// 三目运算符
+				vY = 0;
+				vX > 0 ? vX = distance : vX = -distance;
+				break;
+			// 右
+			case 39:
+				// vX = distance;
+				vY = 0;
+				vX < 0 ? vX = -distance : vX = distance;
+				break;
+			// 上
+			case 38:
+				vX = 0;
+				// vY = -distance;
+				vY > 0 ? vY = distance : vY = -distance;
+				break;
+			// 下
+			case 40:
+				vX = 0;
+				// vY = distance;
+				vY < 0 ? vY = -distance : vY = distance;
+				break;
+		}
+	}
+
+
+	// ----------------------3--------------
+	// 随机食物的位置
+	randomeFoodPosFn();
+
+	// 食物位置的变量(全局)
+	var foodPosL,foodPosT;
+	function randomeFoodPosFn(){
+
+		// 计算水平和垂直方向上有多少个格子
+		var numL = wrap.clientWidth / distance;
+		var numT = wrap.clientHeight / distance;
+		// console.log(numL,numT)
+
+		fn();
+		// -------------6.2完善随机食物位置------------
+		// 遍历位置
+		function fn(){
+			// 计算位置的left和top值
+			foodPosL = randomFn(0,numL)*distance;
+			foodPosT = randomFn(0,numT)*distance;
+			// 遍历判断食物的位置是否跟蛇头以及蛇身的位置重复
+			for(var i = 0; i < snakeArr.length; i++){
+				if(foodPosL == snakeArr[i].offsetLeft && foodPosT == snakeArr[i].offsetTop){
+					fn();
+				}
+			}
+		}
+
+
+		// 改变食物的位置
+		food.style.left = foodPosL + "px";
+		food.style.top = foodPosT + "px";
+	}
+	// 随机函数
+	// 只包含min，不包含max
+	function randomFn(min, max){
+		return parseInt(Math.random()*(max-min) + min);
+	}
+
+
+	// ----------------------4-------------------
+	// 函数：用来判断蛇是否吃到了食物
+	function eatFoodFn(){
+		// 判断蛇头的坐标和食物的坐标是否一致
+		if(snakePosL == foodPosL && snakePosT == foodPosT){
+			// 随机食物
+			randomeFoodPosFn();
+			// 增加一节蛇身
+			addSnakeBodyFn();
+		}
+	}
+
+	// ----------------------5-------------------
+	// 函数：增加蛇身
+
+	function addSnakeBodyFn(){
+		// 1. 创建一个div
+		var snakeBodyDiv = document.createElement("div");
+		// 2. 把这个div添加wrap
+		wrap.appendChild(snakeBodyDiv);
+		// 3. 把这个div添加数组snakeArr
+		snakeArr.push(snakeBodyDiv);
+
+		// 添加类-----放到蛇移动函数里面
+		// snakeBodyDiv.className = "snakeBody";
+	}
+
+	// 函数-------------------------6--------------------
+	// 判断蛇是否碰壁
+	function touchWallFn(){
+		// 计算蛇头四个方向的位置
+		var snakeHeadL = snake.offsetLeft;
+		var snakeHeadT = snake.offsetTop;
+		var snakeHeadR = snakeHeadL + snake.offsetWidth;
+		var snakeHeadB = snakeHeadT + snake.offsetHeight;
+
+		// 判断碰壁
+		if(snakeHeadL < 0 || snakeHeadT < 0 || snakeHeadR > wrap.clientWidth || snakeHeadB > wrap.clientHeight){
+			// 清除定时器
+			clearInterval(timer);
+
+			// 回退一步
+			resetPosFn();
+
+			// 提示用户游戏结束
+			alert("game over");
+		}
+	}
+	// 恢复位置（回退一步）
+	function resetPosFn(){
+		// 遍历
+		for(var i = 0; i < snakeArr.length; i++){
+			// 判断最后一节
+			if(i == snakeArr.length-1){
+				snakeArr[i].style.left = snakePosLast.l + "px";
+				snakeArr[i].style.top = snakePosLast.t + "px";
+
+				break;
+			}
+			// snakeArr[snake, div1, div2, div3]
+			snakeArr[i].style.left = snakeArr[i+1].offsetLeft + "px";
+			snakeArr[i].style.top = snakeArr[i+1].offsetTop + "px";
+		}
+	}
+
+	// ---------------7.1-----------------
+	function touchSelfFn(){
+		// 遍历蛇头的位置跟蛇身的位置是否重合
+		// 注意：i = 1开始
+		for(var i = 1; i < snakeArr.length; i++){
+			if(snakePosL == snakeArr[i].offsetLeft && snakePosT == snakeArr[i].offsetTop){
+				// 清除定时器
+				clearInterval(timer);
+
+				// 回退一步
+				resetPosFn();
+
+				// 提示结束
+				alert("game over");
+			}
+		}
+	}
+</script>
+</html>
